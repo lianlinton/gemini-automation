@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+input/**/*.pdf
+pipeline_output/
+chunks/
+original.pdf
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
