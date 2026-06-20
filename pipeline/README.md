@@ -1,19 +1,28 @@
 # Stenogram extraction pipeline
 
-Splits cabinet-meeting PDFs and runs structured extraction with Gemini 3 Flash Preview (High thinking).
+Splits cabinet-meeting PDFs and runs structured extraction with Gemini 3 Flash Preview (medium thinking).
 
-## Chunking
+## Chunking (Step 2)
 
-For a 25-page PDF:
+Page 1 is always its own chunk (cover/metadata: attendance, agenda). Remaining pages are grouped in blocks of up to 10.
 
 | Chunk | Pages |
 |-------|-------|
-| 1 | 1 |
+| 1 | 1 (metadata) |
 | 2 | 2–11 |
 | 3 | 12–21 |
 | 4 | 22–25 |
 
-Output layout per source file:
+## Logging (Step 6)
+
+| File | Purpose |
+|------|---------|
+| `run.log` | Live processing log |
+| `chunks_index.json` | All chunk PDFs after split |
+| `manifest.json` | Per-chunk API usage |
+| `processing_summary.json` | Per-document completion status |
+
+## Output layout (Steps 3, 5, 7)
 
 ```
 pipeline_output/

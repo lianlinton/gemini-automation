@@ -219,6 +219,95 @@ def extract_all(
     return manifest
 
 
+def write_processing_summary(
+    output_root: Path,
+    jobs_by_source: dict[str, list[ChunkJob]],
+    manifest: list[dict],
+) -> Path:
+    """Write a per-document processing summary and print totals."""
+    by_source: dict[str, dict] = {}
+    for source_name, jobs in jobs_by_source.items():
+        total = len(jobs)
+        extracted = sum(1 for job in jobs if job.extraction_md.is_file())
+        merged = jobs[0].merged_md.is_file() if jobs else False
+        by_source[source_name] = {
+            "chunks_total": total,
+            "chunks_extracted": extracted,
+            "chunks_pending": total - extracted,
+            "merged": merged,
+            "merged_path": str(jobs[0].merged_md) if jobs and merged else None,
+        }
+
+    status_counts: dict[str, int] = {}
+    for entry in manifest:
+        status = entry.get("status", "unknown")
+        status_counts[status] = status_counts.get(status, 0) + 1
+
+    summary = {
+        "documents": len(jobs_by_source),
+        "chunks_total": sum(len(j) for j in jobs_by_source.values()),
+        "chunks_extracted": sum(
+            1
+            for jobs in jobs_by_source.values()
+            for job in jobs
+            if job.extraction_md.is_file()
+        ),
+        "status_counts": status_counts,
+        "per_document": by_source,
+    }
+
+    summary_path = output_root / "processing_summary.json"
+    summary_path.write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    print("[summary] Processing status")
+    print(f"  documents: {summary['documents']}")
+    print(f"  chunks: {summary['chunks_extracted']}/{summary['chunks_total']} extracted")
+    for status, count in sorted(status_counts.items()):
+        print(f"  {status}: {count}")
+    for source_name, info in sorted(by_source.items()):
+        pending = info["chunks_pending"]
+        flag = "OK" if pending == 0 and info["merged"] else "INCOMPLETE"
+        print(
+            f"  [{flag}] {source_name}: "
+            f"{info['chunks_extracted']}/{info['chunks_total']} chunks"
+            + (" | merged" if info["merged"] else "")
+        )
+    print(f"[summary] Written to {summary_path}")
+    return summary_path
+
+
+def write_chunks_index(
+    output_root: Path,
+    jobs_by_source: dict[str, list[ChunkJob]],
+) -> Path:
+    """Log every chunk PDF created during preprocessing."""
+    index = {
+        "documents": len(jobs_by_source),
+        "chunks_total": sum(len(j) for j in jobs_by_source.values()),
+        "files": [],
+    }
+    for source_name, jobs in sorted(jobs_by_source.items()):
+        for job in jobs:
+            index["files"].append(
+                {
+                    "source": source_name,
+                    "chunk": job.chunk_pdf.name,
+                    "path": str(job.chunk_pdf),
+                }
+            )
+
+    index_path = output_root / "chunks_index.json"
+    index_path.write_text(
+        json.dumps(index, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(f"[preprocess] Chunk index: {index['chunks_total']} file(s) -> {index_path}")
+    return index_path
+
+
 def merge_all(jobs_by_source: dict[str, list[ChunkJob]]) -> list[Path]:
     """Concatenate chunk extractions into one markdown file per source PDF."""
     written: list[Path] = []
@@ -378,6 +467,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Error: no output folders found under {output_root}", file=sys.stderr)
             return 1
         merge_all(jobs_by_source)
+        write_processing_summary(output_root, jobs_by_source, manifest=[])
         print("Done.")
         return 0
 
@@ -415,11 +505,12 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     if args.preprocess_only:
+        write_chunks_index(output_root, jobs_by_source)
         print(f"Done. Chunks written under {output_root}")
         return 0
 
     manifest_path = output_root / "manifest.json"
-    extract_all(
+    manifest = extract_all(
         jobs_by_source,
         prompt_path=prompt_path,
         model=args.model,
@@ -429,6 +520,7 @@ def main(argv: list[str] | None = None) -> int:
         manifest_path=manifest_path,
     )
     merge_all(jobs_by_source)
+    write_processing_summary(output_root, jobs_by_source, manifest)
     print(f"Done. Manifest: {manifest_path}")
     return 0
 
