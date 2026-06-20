@@ -1,5 +1,5 @@
 Create a structured data table extracting speech units from Israeli government cabinet 
-meeting stenograms with these exact columns:
+meeting minutes with these exact columns:
 
 RULES FOR EXTRACTION:
 

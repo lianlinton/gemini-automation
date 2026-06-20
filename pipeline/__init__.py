@@ -1,4 +1,4 @@
-"""Cabinet stenogram preprocessing and Gemini extraction pipeline."""
+"""Gemini Automation pipeline."""
 
 from pathlib import Path
 

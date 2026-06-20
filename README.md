@@ -1,8 +1,38 @@
-# Gemini Stenogram Automation
+# Gemini Automation
 
-Pipeline for extracting structured speech-unit tables from Israeli government cabinet meeting stenograms using the Gemini API.
+Pipeline for extracting structured speech-unit tables from Israeli government cabinet meeting minutes using the Gemini API, per the project specifications.
 
-**New to this?** Read **[SETUP_GUIDE.md](SETUP_GUIDE.md)** — step-by-step instructions aligned to the full workflow (organize → split → process → log → merge).
+## Quick reference
+
+```bash
+# One-time setup
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # add GEMINI_API_KEY
+
+# Activate (every session)
+cd ~/Documents/datasquad/gemini-automation
+source .venv/bin/activate
+
+# Split only
+python -m pipeline input/1968 -o pipeline_output/1968 --preprocess-only
+
+# Full workflow (split + extract + merge)
+python -m pipeline input/1968 -o pipeline_output/1968 --copy-source --skip-existing
+
+# Resume
+python -m pipeline pipeline_output/1968 --extract-only --skip-existing
+
+# Merge only
+python -m pipeline pipeline_output/1968 --merge-only
+
+# Count progress
+find pipeline_output/1968 -path "*/extractions/*.md" | wc -l
+```
+
+**Finished tables:** `pipeline_output/1968/<pdf-name>/final/<pdf-name>.md`
+
+**Full setup and usage guide:** **[SETUP_GUIDE.md](SETUP_GUIDE.md)**
 
 ## Workflow
 
@@ -11,23 +41,7 @@ Pipeline for extracting structured speech-unit tables from Israeli government ca
 3. **Store** chunks in `pipeline_output/<batch>/<pdf-name>/chunks/` with consistent naming
 4. **Process** — loop chunks through Gemini with `prompt.md`, save `.md` tables
 5. **Log** — `run.log`, `chunks_index.json`, `manifest.json`, `processing_summary.json`
-6. **Merge** *(automatic)* — one `final/<pdf-name>.md` per meeting
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env   # add GEMINI_API_KEY
-```
-
-Put source PDFs in `input/` (e.g. `input/1968/`), then:
-
-```bash
-# Split + extract + merge
-python -m pipeline input/1968 -o pipeline_output/1968 --copy-source --skip-existing
-
-# Or extract only (after chunks exist)
-python -m pipeline pipeline_output/1968 --extract-only --skip-existing
-```
+6. **Merge** — one `final/<pdf-name>.md` per meeting (complete structured table)
 
 See [`pipeline/README.md`](pipeline/README.md) for chunking rules, output layout, and options.
 

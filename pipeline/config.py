@@ -1,4 +1,4 @@
-"""Shared defaults for the stenogram extraction pipeline."""
+"""Shared defaults for Gemini Automation."""
 
 from pathlib import Path
 

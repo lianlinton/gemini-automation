@@ -1,4 +1,4 @@
-# Stenogram extraction pipeline
+# Gemini Automation — pipeline
 
 Splits cabinet-meeting PDFs and runs structured extraction with Gemini 3 Flash Preview (medium thinking).
 
@@ -23,6 +23,8 @@ Page 1 is always its own chunk (cover/metadata: attendance, agenda). Remaining p
 | `processing_summary.json` | Per-document completion status |
 
 ## Output layout (Steps 3, 5, 7)
+
+Each meeting produces a merged markdown table in `final/`. Chunk-level files in `extractions/` are intermediate outputs.
 
 ```
 pipeline_output/
@@ -59,7 +61,7 @@ Never commit API keys. Rotate any key that was shared in email or chat.
 
 ## Run
 
-Full pipeline (split + extract):
+Full pipeline (split + extract + merge):
 
 ```bash
 python -m pipeline input/ -o pipeline_output --copy-source --skip-existing

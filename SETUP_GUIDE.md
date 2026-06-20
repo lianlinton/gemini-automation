@@ -1,25 +1,45 @@
-# Complete setup guide (no coding experience required)
+# Setup and usage guide
 
-This guide walks through the **full stenogram processing workflow** step by step. You do not need to know how to program — only how to copy commands into **Terminal** on a Mac.
+This guide describes how to run **Gemini Automation** according to the project specifications. You do not need programming experience — only the ability to copy commands into **Terminal** on a Mac.
 
 **Repository:** https://github.com/lianlinton/gemini-automation
 
 ---
 
-# If already set up — next steps
-
-Skip to **First-time setup** below only if you have never installed Python or configured the project.
-
-### Every time you open Terminal for this project
+## Quick reference
 
 ```bash
+# Activate (every session)
 cd ~/Documents/datasquad/gemini-automation
 source .venv/bin/activate
+
+# Split only
+python -m pipeline input/1968 -o pipeline_output/1968 --preprocess-only
+
+# Full workflow
+python -m pipeline input/1968 -o pipeline_output/1968 --copy-source --skip-existing
+
+# Resume
+python -m pipeline pipeline_output/1968 --extract-only --skip-existing
+
+# Merge only
+python -m pipeline pipeline_output/1968 --merge-only
+
+# Count progress
+find pipeline_output/1968 -path "*/extractions/*.md" | wc -l
 ```
 
-(Adjust the `cd` path if your folder lives somewhere else. Drag the folder onto Terminal after `cd ` to auto-fill the path.)
+**Finished tables:** `pipeline_output/1968/<pdf-name>/final/<pdf-name>.md`
 
-You should see `(.venv)` at the start of the line. Your API key must already be in `.env` (see First-time setup → Step 4).
+First time using this? Continue to **First-time setup** at the bottom. Already configured? Jump to **If already set up — next steps** below.
+
+---
+
+# If already set up — next steps
+
+Skip to **First-time setup** at the bottom only if you have never installed Python or configured the project. See **Quick reference** above for copy-paste commands.
+
+Your API key must already be in `.env` (see First-time setup → Step D).
 
 ---
 
@@ -35,13 +55,13 @@ The tool follows these steps automatically:
 | **4** | Loop through chunks → send each to Gemini with the OCR/extraction prompt → save response |
 | **5** | Save output as `.md` files (structured markdown tables) |
 | **6** | Log every file processed |
-| **7** | *(Optional)* Merge chunk outputs into one complete document per meeting |
+| **7** | Merge chunk outputs into one complete document per meeting |
 
 ---
 
 ## Step 1 — Organize input files
 
-Put all stenogram PDFs for one batch in a single folder inside `input/`.
+Put all cabinet meeting PDFs for one batch in a single folder inside `input/`.
 
 **In Finder:**
 
@@ -208,17 +228,17 @@ Press `Ctrl + C` to stop watching (does not stop the main job).
 
 ---
 
-## Step 7 — (Optional) Merge into one document per meeting
+## Step 7 — Merge into one document per meeting
 
-After all chunks for a meeting are extracted, the tool **automatically merges** them into one file:
+After all chunks for a meeting are extracted, the tool **merges** them into one file:
 
 ```
 pipeline_output/1968/<pdf-name>/final/<pdf-name>.md
 ```
 
-This is the **complete structured table** for the whole meeting (header row once, all speech rows appended in order).
+This is the **complete structured table** for the whole meeting (header row once, all speech rows appended in order). This merged file is the primary deliverable per meeting.
 
-**Rebuild merged files only** (if extractions exist but `final/` is missing):
+**Rebuild merged files** (if extractions exist but `final/` is missing):
 
 ```bash
 python -m pipeline pipeline_output/1968 --merge-only
@@ -240,38 +260,11 @@ python -m pipeline pipeline_output/1968 --extract-only --skip-existing
 
 | Problem | Fix |
 |---------|-----|
-| `GEMINI_API_KEY is not set` | Edit `.env` — see First-time setup Step 4 |
+| `GEMINI_API_KEY is not set` | Edit `.env` — see First-time setup → Step D |
 | `no chunk folders found` | Use `pipeline_output/1968`, not `pipeline_output` alone |
 | `Server disconnected` | Wait, then rerun resume command |
 | Run stops, no new files | API budget may be exhausted — check Google AI Studio |
 | `zsh: command not found: #` | Don't paste lines starting with `#` — those are comments |
-
----
-
-## Quick reference
-
-```bash
-# Activate (every session)
-cd ~/Documents/datasquad/gemini-automation
-source .venv/bin/activate
-
-# Split only
-python -m pipeline input/1968 -o pipeline_output/1968 --preprocess-only
-
-# Full workflow
-python -m pipeline input/1968 -o pipeline_output/1968 --copy-source --skip-existing
-
-# Resume
-python -m pipeline pipeline_output/1968 --extract-only --skip-existing
-
-# Merge only
-python -m pipeline pipeline_output/1968 --merge-only
-
-# Count progress
-find pipeline_output/1968 -path "*/extractions/*.md" | wc -l
-```
-
-**Finished tables:** `pipeline_output/1968/<pdf-name>/final/<pdf-name>.md`
 
 ---
 
@@ -309,7 +302,7 @@ cp .env.example .env
 open -a TextEdit .env
 ```
 
-Replace `your-api-key-here` with the real Gemini API key. Save and close.
+Replace `your-api-key-here` with your Gemini API key from [Google AI Studio](https://aistudio.google.com/). Save and close.
 
 **Never** share or upload the `.env` file.
 
@@ -324,12 +317,12 @@ Replace `your-api-key-here` with the real Gemini API key. Save and close.
 
 ---
 
-## Getting help
+## If something still fails
 
-Send whoever set up the project:
+Before retrying, note:
 
-1. Screenshot of the Terminal error (last 10–20 lines).
+1. The last 10–20 lines of Terminal output (or a screenshot).
 2. Output of: `find pipeline_output/1968 -path "*/extractions/*.md" | wc -l`
 3. Contents of `processing_summary.json` (if it exists).
 
-Do **not** send `.env` or the API key.
+Do **not** share or commit the `.env` file or API key.

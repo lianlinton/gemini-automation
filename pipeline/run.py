@@ -371,7 +371,7 @@ def load_jobs_from_output_root(output_root: Path) -> dict[str, list[ChunkJob]]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Split cabinet stenogram PDFs and extract structured markdown tables.",
+        description="Split cabinet meeting PDFs and extract structured markdown tables.",
     )
     parser.add_argument(
         "inputs",
